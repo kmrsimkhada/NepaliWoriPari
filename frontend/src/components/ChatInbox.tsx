@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { ChatModal } from './ChatModal';
+import { API_BASE } from '../config';
 
 interface Conversation {
   conversation_id: string;
@@ -33,7 +34,7 @@ export function ChatInbox({ show, onClose }: ChatInboxProps) {
   const loadConversations = async () => {
     setLoading(true);
     try {
-      const res = await fetch('/api/messages/conversations', {
+      const res = await fetch(`${API_BASE}/messages/conversations`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (res.ok) {

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Category, AUSTRALIAN_STATES } from '../types';
 import { useAuth } from '../context/AuthContext';
+import { API_BASE } from '../config';
 
 interface RegisterBusinessProps {
   show: boolean;
@@ -28,7 +29,7 @@ export function RegisterBusiness({ show, onClose, onSuccess }: RegisterBusinessP
   useEffect(() => {
     if (show) {
       // Fetch all subcategories (grouped by parent) for the dropdown
-      fetch('/api/categories/all-subcategories')
+      fetch(`${API_BASE}/categories/all-subcategories`)
         .then((res) => res.json())
         .then((data: Category[]) => {
           setCategories(data);
@@ -43,7 +44,7 @@ export function RegisterBusiness({ show, onClose, onSuccess }: RegisterBusinessP
     setLoading(true);
 
     try {
-      const res = await fetch('/api/register', {
+      const res = await fetch(`${API_BASE}/register`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

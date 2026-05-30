@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
 import { io, Socket } from 'socket.io-client';
 import { useAuth } from './AuthContext';
+import { API_BASE } from '../config';
 
 interface NotificationContextType {
   unreadMessages: number;
@@ -21,8 +22,8 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
 
     try {
       const [msgRes, reqRes] = await Promise.all([
-        fetch('/api/messages/unread-count', { headers: { Authorization: `Bearer ${token}` } }),
-        fetch('/api/service-requests/pending-count', { headers: { Authorization: `Bearer ${token}` } }),
+        fetch(`${API_BASE}/messages/unread-count`, { headers: { Authorization: `Bearer ${token}` } }),
+        fetch(`${API_BASE}/service-requests/pending-count`, { headers: { Authorization: `Bearer ${token}` } }),
       ]);
 
       if (msgRes.ok) {

@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { io, Socket } from 'socket.io-client';
 import { useAuth } from '../context/AuthContext';
+import { API_BASE } from '../config';
 
 interface Message {
   id?: number;
@@ -74,7 +75,7 @@ export function ChatModal({ show, onClose, businessId, businessName, providerId 
   const loadMessages = async (convId: string) => {
     setLoading(true);
     try {
-      const res = await fetch(`/api/messages/${convId}`, {
+      const res = await fetch(`${API_BASE}/messages/${convId}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (res.ok) {
@@ -104,7 +105,7 @@ export function ChatModal({ show, onClose, businessId, businessName, providerId 
 
     // Send via API (persists to DB)
     try {
-      await fetch('/api/messages/send', {
+      await fetch(`${API_BASE}/messages/send`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

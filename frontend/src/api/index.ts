@@ -1,10 +1,5 @@
 import { BusinessResponse, Category, AuthResponse, User } from '../types';
-
-const API_BASE = import.meta.env.VITE_API_URL
-  ? `${import.meta.env.VITE_API_URL}/api`
-  : import.meta.env.PROD
-    ? 'https://nepaliworipari.onrender.com/api'
-    : '/api';
+import { API_BASE } from '../config';
 
 export async function fetchCategories(): Promise<Category[]> {
   const response = await fetch(`${API_BASE}/categories`);

@@ -3,6 +3,7 @@ import { Business } from '../types';
 import { ReviewSection } from './ReviewSection';
 import { ChatModal } from './ChatModal';
 import { useAuth } from '../context/AuthContext';
+import { API_BASE } from '../config';
 
 interface BusinessCardProps {
   business: Business;
@@ -22,7 +23,7 @@ export function BusinessCard({ business }: BusinessCardProps) {
     if (!token) return;
     setRequesting(true);
     try {
-      const res = await fetch(`/api/service-requests/${business.id}`, {
+      const res = await fetch(`${API_BASE}/service-requests/${business.id}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

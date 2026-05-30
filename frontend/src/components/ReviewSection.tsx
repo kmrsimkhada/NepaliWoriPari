@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
+import { API_BASE } from '../config';
 
 interface Review {
   id: number;
@@ -44,7 +45,7 @@ export function ReviewSection({ businessId, businessName, show, onClose }: Revie
 
   const checkCanReview = async () => {
     try {
-      const res = await fetch(`/api/service-requests/can-review/${businessId}`, {
+      const res = await fetch(`${API_BASE}/service-requests/can-review/${businessId}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (res.ok) {
@@ -59,7 +60,7 @@ export function ReviewSection({ businessId, businessName, show, onClose }: Revie
   const loadReviews = async () => {
     setLoading(true);
     try {
-      const res = await fetch(`/api/reviews/${businessId}`);
+      const res = await fetch(`${API_BASE}/reviews/${businessId}`);
       const data = await res.json();
       setReviews(data.reviews);
       setAverageRating(data.averageRating);
@@ -82,7 +83,7 @@ export function ReviewSection({ businessId, businessName, show, onClose }: Revie
     setError('');
 
     try {
-      const res = await fetch(`/api/reviews/${businessId}`, {
+      const res = await fetch(`${API_BASE}/reviews/${businessId}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
+import { API_BASE } from '../config';
 
 interface ServiceRequest {
   id: number;
@@ -52,7 +53,7 @@ export function ServiceRequests({ show, onClose }: ServiceRequestsProps) {
 
   const updateStatus = async (requestId: number, status: string) => {
     try {
-      const res = await fetch(`/api/service-requests/${requestId}/status`, {
+      const res = await fetch(`${API_BASE}/service-requests/${requestId}/status`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
