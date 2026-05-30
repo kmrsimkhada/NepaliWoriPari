@@ -1,7 +1,6 @@
 import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
-import { io, Socket } from 'socket.io-client';
 import { useAuth } from './AuthContext';
-import { API_BASE, SOCKET_URL } from '../config';
+import { API_BASE } from '../config';
 
 interface NotificationContextType {
   unreadMessages: number;
@@ -15,7 +14,6 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
   const { user, token } = useAuth();
   const [unreadMessages, setUnreadMessages] = useState(0);
   const [pendingRequests, setPendingRequests] = useState(0);
-  const [, setSocket] = useState<Socket | null>(null);
 
   const fetchCounts = useCallback(async () => {
     if (!token) return;
@@ -43,23 +41,9 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
     if (user && token) {
       fetchCounts();
 
-      // Connect socket for real-time notifications
-      const newSocket = io(SOCKET_URL, { auth: { token } });
-
-      newSocket.on('message_notification', () => {
-        setUnreadMessages((prev) => prev + 1);
-      });
-
-      newSocket.on('new_service_request', () => {
-        setPendingRequests((prev) => prev + 1);
-      });
-
-      setSocket(newSocket);
-
-      return () => {
-        newSocket.disconnect();
-        setSocket(null);
-      };
+      // Poll for notifications every 30 seconds
+      const interval = setInterval(fetchCounts, 30000);
+      return () => clearInterval(interval);
     } else {
       setUnreadMessages(0);
       setPendingRequests(0);

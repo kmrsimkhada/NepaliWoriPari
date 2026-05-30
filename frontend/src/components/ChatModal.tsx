@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
-import { io, Socket } from 'socket.io-client';
 import { useAuth } from '../context/AuthContext';
-import { API_BASE, SOCKET_URL } from '../config';
+import { API_BASE } from '../config';
 
 interface Message {
   id?: number;
@@ -26,44 +25,22 @@ export function ChatModal({ show, onClose, businessId, businessName, providerId 
   const [newMessage, setNewMessage] = useState('');
   const [loading, setLoading] = useState(false);
   const [conversationId, setConversationId] = useState<string | null>(null);
-  const socketRef = useRef<Socket | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
     if (show && token && user) {
-      // Generate conversation ID
       const sorted = [user.id, providerId].sort((a, b) => a - b);
       const convId = `${sorted[0]}_${sorted[1]}_${businessId}`;
       setConversationId(convId);
 
-      // Connect socket
-      const socket = io(SOCKET_URL, {
-        auth: { token },
-      });
-
-      socket.on('connect', () => {
-        socket.emit('join_conversation', convId);
-      });
-
-      socket.on('new_message', (msg: { senderId: number; content: string; created_at: string }) => {
-        // Only add messages from the other user (sender's messages are added optimistically)
-        if (msg.senderId !== user.id) {
-          setMessages((prev) => [...prev, {
-            sender_id: msg.senderId,
-            content: msg.content,
-            created_at: msg.created_at,
-          }]);
-        }
-      });
-
-      socketRef.current = socket;
-
-      // Load existing messages
       loadMessages(convId);
 
+      // Poll for new messages every 5 seconds
+      pollRef.current = setInterval(() => loadMessages(convId), 5000);
+
       return () => {
-        socket.disconnect();
-        socketRef.current = null;
+        if (pollRef.current) clearInterval(pollRef.current);
       };
     }
   }, [show, token, user, businessId, providerId]);
@@ -73,7 +50,6 @@ export function ChatModal({ show, onClose, businessId, businessName, providerId 
   }, [messages]);
 
   const loadMessages = async (convId: string) => {
-    setLoading(true);
     try {
       const res = await fetch(`${API_BASE}/messages/${convId}`, {
         headers: { Authorization: `Bearer ${token}` },
@@ -83,7 +59,7 @@ export function ChatModal({ show, onClose, businessId, businessName, providerId 
         setMessages(data.messages);
       }
     } catch {
-      // No existing messages yet
+      // Silent fail
     } finally {
       setLoading(false);
     }
@@ -96,14 +72,14 @@ export function ChatModal({ show, onClose, businessId, businessName, providerId 
     const content = newMessage.trim();
     setNewMessage('');
 
-    // Optimistically add message to local state immediately
+    // Optimistically add message to local state
     setMessages((prev) => [...prev, {
       sender_id: user.id,
       content,
       created_at: new Date().toISOString(),
     }]);
 
-    // Send via API (persists to DB)
+    // Send via API
     try {
       await fetch(`${API_BASE}/messages/send`, {
         method: 'POST',
@@ -116,13 +92,6 @@ export function ChatModal({ show, onClose, businessId, businessName, providerId 
           businessId,
           content,
         }),
-      });
-
-      // Emit via socket for real-time delivery to the other user
-      socketRef.current?.emit('send_message', {
-        conversationId,
-        receiverId: providerId,
-        content,
       });
     } catch {
       // Message already shown optimistically
