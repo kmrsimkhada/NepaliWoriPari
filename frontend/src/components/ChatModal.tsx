@@ -36,7 +36,7 @@ export function ChatModal({ show, onClose, businessId, businessName, providerId 
       setConversationId(convId);
 
       // Connect socket
-      const socket = io('/', {
+      const socket = io(import.meta.env.VITE_API_URL || '/', {
         auth: { token },
       });
 
