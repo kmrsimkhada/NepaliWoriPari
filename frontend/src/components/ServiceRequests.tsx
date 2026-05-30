@@ -36,7 +36,7 @@ export function ServiceRequests({ show, onClose }: ServiceRequestsProps) {
   const loadRequests = async () => {
     setLoading(true);
     try {
-      const endpoint = isProvider ? '/api/service-requests/provider-requests' : '/api/service-requests/my-requests';
+      const endpoint = isProvider ? `${API_BASE}/service-requests/provider-requests` : `${API_BASE}/service-requests/my-requests`;
       const res = await fetch(endpoint, {
         headers: { Authorization: `Bearer ${token}` },
       });
