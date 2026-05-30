@@ -6,10 +6,6 @@ const migrate = async () => {
   try {
     await client.query('BEGIN');
 
-    // Drop existing tables to rebuild with new structure
-    await client.query('DROP TABLE IF EXISTS businesses CASCADE');
-    await client.query('DROP TABLE IF EXISTS categories CASCADE');
-
     // Create categories table with parent_id for hierarchy
     await client.query(`
       CREATE TABLE IF NOT EXISTS categories (
@@ -23,9 +19,28 @@ const migrate = async () => {
       );
     `);
 
-    // Create index for parent lookup
     await client.query(`
       CREATE INDEX IF NOT EXISTS idx_categories_parent ON categories(parent_id);
+    `);
+
+    // Create users table for authentication
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS users (
+        id SERIAL PRIMARY KEY,
+        name VARCHAR(255) NOT NULL,
+        email VARCHAR(255) NOT NULL UNIQUE,
+        password_hash VARCHAR(255) NOT NULL,
+        role VARCHAR(20) NOT NULL DEFAULT 'seeker',
+        phone VARCHAR(20),
+        state VARCHAR(3),
+        city VARCHAR(100),
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+
+    await client.query(`
+      CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
     `);
 
     // Create businesses table with lat/lng for geolocation
@@ -34,6 +49,7 @@ const migrate = async () => {
         id SERIAL PRIMARY KEY,
         name VARCHAR(255) NOT NULL,
         category_id INTEGER REFERENCES categories(id) ON DELETE SET NULL,
+        user_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
         state VARCHAR(3) NOT NULL,
         city VARCHAR(100),
         address TEXT,
@@ -50,7 +66,14 @@ const migrate = async () => {
       );
     `);
 
-    // Create indexes for faster queries
+    // Add user_id column if it doesn't exist (for existing databases)
+    await client.query(`
+      DO $$ BEGIN
+        ALTER TABLE businesses ADD COLUMN IF NOT EXISTS user_id INTEGER REFERENCES users(id) ON DELETE SET NULL;
+      EXCEPTION WHEN duplicate_column THEN NULL;
+      END $$;
+    `);
+
     await client.query(`
       CREATE INDEX IF NOT EXISTS idx_businesses_state ON businesses(state);
     `);
@@ -64,8 +87,72 @@ const migrate = async () => {
       CREATE INDEX IF NOT EXISTS idx_businesses_location ON businesses(latitude, longitude);
     `);
 
+    // Create reviews table
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS reviews (
+        id SERIAL PRIMARY KEY,
+        business_id INTEGER NOT NULL REFERENCES businesses(id) ON DELETE CASCADE,
+        user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        rating INTEGER NOT NULL CHECK (rating >= 1 AND rating <= 5),
+        comment TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+
+    await client.query(`
+      CREATE INDEX IF NOT EXISTS idx_reviews_business ON reviews(business_id);
+    `);
+    await client.query(`
+      CREATE INDEX IF NOT EXISTS idx_reviews_user ON reviews(user_id);
+    `);
+    await client.query(`
+      CREATE UNIQUE INDEX IF NOT EXISTS idx_reviews_user_business ON reviews(user_id, business_id);
+    `);
+
+    // Create messages table for chat
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS messages (
+        id SERIAL PRIMARY KEY,
+        conversation_id VARCHAR(100) NOT NULL,
+        sender_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        receiver_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        business_id INTEGER NOT NULL REFERENCES businesses(id) ON DELETE CASCADE,
+        content TEXT NOT NULL,
+        is_read BOOLEAN DEFAULT FALSE,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+
+    await client.query(`
+      CREATE INDEX IF NOT EXISTS idx_messages_conversation ON messages(conversation_id);
+    `);
+    await client.query(`
+      CREATE INDEX IF NOT EXISTS idx_messages_receiver ON messages(receiver_id, is_read);
+    `);
+
+    // Create service_requests table to track services taken
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS service_requests (
+        id SERIAL PRIMARY KEY,
+        business_id INTEGER NOT NULL REFERENCES businesses(id) ON DELETE CASCADE,
+        seeker_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        status VARCHAR(20) NOT NULL DEFAULT 'pending',
+        note TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        completed_at TIMESTAMP
+      );
+    `);
+
+    await client.query(`
+      CREATE INDEX IF NOT EXISTS idx_service_requests_business ON service_requests(business_id);
+    `);
+    await client.query(`
+      CREATE INDEX IF NOT EXISTS idx_service_requests_seeker ON service_requests(seeker_id);
+    `);
+
     await client.query('COMMIT');
-    console.log('Migration completed successfully');
+    console.log('Migration completed successfully (non-destructive)');
   } catch (error) {
     await client.query('ROLLBACK');
     console.error('Migration failed:', error);

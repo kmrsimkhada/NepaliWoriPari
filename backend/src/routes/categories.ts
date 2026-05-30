@@ -16,6 +16,22 @@ router.get('/', async (_req: Request, res: Response) => {
   }
 });
 
+// GET /api/categories/all-subcategories - Get all subcategories with parent name
+router.get('/all-subcategories', async (_req: Request, res: Response) => {
+  try {
+    const result = await pool.query(
+      `SELECT c.*, pc.name as parent_name 
+       FROM categories c 
+       JOIN categories pc ON c.parent_id = pc.id 
+       ORDER BY pc.name ASC, c.name ASC`
+    );
+    res.json(result.rows);
+  } catch (error) {
+    console.error('Error fetching all subcategories:', error);
+    res.status(500).json({ error: 'Failed to fetch subcategories' });
+  }
+});
+
 // GET /api/categories/:slug/subcategories - Get subcategories for a parent
 router.get('/:slug/subcategories', async (req: Request, res: Response) => {
   try {

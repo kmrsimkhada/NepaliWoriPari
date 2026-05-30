@@ -1,4 +1,4 @@
-import { BusinessResponse, Category } from '../types';
+import { BusinessResponse, Category, AuthResponse, User } from '../types';
 
 const API_BASE = '/api';
 
@@ -62,4 +62,46 @@ export async function fetchNearbyBusinesses(params: {
   const response = await fetch(`${API_BASE}/businesses/nearby?${searchParams.toString()}`);
   if (!response.ok) throw new Error('Failed to fetch nearby businesses');
   return response.json();
+}
+
+
+// Auth API functions
+export async function signup(name: string, email: string, password: string, role: string, phone?: string, state?: string, city?: string): Promise<AuthResponse> {
+  const response = await fetch(`${API_BASE}/auth/signup`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ name, email, password, role, phone, state, city }),
+  });
+  const data = await response.json();
+  if (!response.ok) throw new Error(data.error || 'Signup failed');
+  return data;
+}
+
+export async function login(email: string, password: string): Promise<AuthResponse> {
+  const response = await fetch(`${API_BASE}/auth/login`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email, password }),
+  });
+  const data = await response.json();
+  if (!response.ok) throw new Error(data.error || 'Login failed');
+  return data;
+}
+
+export async function getMe(token: string): Promise<{ user: User }> {
+  const response = await fetch(`${API_BASE}/auth/me`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  const data = await response.json();
+  if (!response.ok) throw new Error(data.error || 'Failed to get user');
+  return data;
+}
+
+export async function fetchMyBusinesses(token: string): Promise<{ businesses: import('../types').Business[] }> {
+  const response = await fetch(`${API_BASE}/register/my-businesses`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  const data = await response.json();
+  if (!response.ok) throw new Error(data.error || 'Failed to fetch your businesses');
+  return data;
 }

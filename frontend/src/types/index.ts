@@ -12,6 +12,7 @@ export interface Business {
   id: number;
   name: string;
   category_id: number;
+  user_id: number | null;
   state: string;
   city: string;
   address: string;
@@ -42,6 +43,22 @@ export interface PaginationInfo {
 export interface BusinessResponse {
   businesses: Business[];
   pagination: PaginationInfo;
+}
+
+export interface User {
+  id: number;
+  name: string;
+  email: string;
+  role: 'seeker' | 'provider';
+  phone?: string;
+  state?: string;
+  city?: string;
+}
+
+export interface AuthResponse {
+  message: string;
+  user: User;
+  token: string;
 }
 
 export type AustralianState = 'ALL' | 'NSW' | 'VIC' | 'QLD' | 'WA' | 'SA' | 'TAS' | 'ACT' | 'NT';

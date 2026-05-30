@@ -5,10 +5,17 @@ import { CategoryGrid } from './components/CategoryGrid';
 import { BusinessList } from './components/BusinessList';
 import { LocationFilter } from './components/LocationFilter';
 import { RegisterBusiness } from './components/RegisterBusiness';
-import { fetchCategoryStats, fetchSubcategories, fetchBusinesses, fetchNearbyBusinesses } from './api';
+import { AuthModal } from './components/AuthModal';
+import { ChatInbox } from './components/ChatInbox';
+import { ServiceRequests } from './components/ServiceRequests';
+import { AuthProvider, useAuth } from './context/AuthContext';
+import { NotificationProvider, useNotifications } from './context/NotificationContext';
+import { fetchCategoryStats, fetchSubcategories, fetchBusinesses, fetchNearbyBusinesses, fetchMyBusinesses } from './api';
 import { AustralianState, Business, Category, PaginationInfo } from './types';
 
-function App() {
+function AppContent() {
+  const { user, token, isLoading: authLoading } = useAuth();
+  const { refreshCounts } = useNotifications();
   const [selectedState, setSelectedState] = useState<AustralianState>('ALL');
   const [selectedParent, setSelectedParent] = useState<string | null>(null);
   const [selectedSubcategory, setSelectedSubcategory] = useState<string | null>(null);
@@ -26,6 +33,11 @@ function App() {
   const [userLng, setUserLng] = useState<number | null>(null);
   const [radius, setRadius] = useState(10);
   const [showRegister, setShowRegister] = useState(false);
+  const [showAuth, setShowAuth] = useState(false);
+  const [showMessages, setShowMessages] = useState(false);
+  const [showRequests, setShowRequests] = useState(false);
+
+  const isProvider = user?.role === 'provider';
 
   // Fetch parent categories with business counts
   const loadParentCategories = useCallback(async () => {
@@ -54,12 +66,17 @@ function App() {
 
   // Fetch businesses
   const loadBusinesses = useCallback(async () => {
+    if (authLoading) return; // Wait for auth to resolve first
+
     setLoading(true);
     try {
-      let data;
-
-      if (locationEnabled && userLat !== null && userLng !== null) {
-        data = await fetchNearbyBusinesses({
+      // Providers only see their own businesses
+      if (isProvider && token) {
+        const data = await fetchMyBusinesses(token);
+        setBusinesses(data.businesses);
+        setPagination(null);
+      } else if (locationEnabled && userLat !== null && userLng !== null) {
+        const data = await fetchNearbyBusinesses({
           lat: userLat,
           lng: userLng,
           radius,
@@ -68,8 +85,10 @@ function App() {
           page: currentPage,
           limit: 20,
         });
+        setBusinesses(data.businesses);
+        setPagination(data.pagination);
       } else {
-        data = await fetchBusinesses({
+        const data = await fetchBusinesses({
           state: selectedState,
           category: selectedSubcategory || undefined,
           parentCategory: !selectedSubcategory ? selectedParent || undefined : undefined,
@@ -77,10 +96,9 @@ function App() {
           page: currentPage,
           limit: 20,
         });
+        setBusinesses(data.businesses);
+        setPagination(data.pagination);
       }
-
-      setBusinesses(data.businesses);
-      setPagination(data.pagination);
     } catch (error) {
       console.error('Failed to load businesses:', error);
       setBusinesses([]);
@@ -88,7 +106,7 @@ function App() {
     } finally {
       setLoading(false);
     }
-  }, [selectedState, selectedParent, selectedSubcategory, searchQuery, currentPage, locationEnabled, userLat, userLng, radius]);
+  }, [selectedState, selectedParent, selectedSubcategory, searchQuery, currentPage, locationEnabled, userLat, userLng, radius, isProvider, token, authLoading]);
 
   useEffect(() => {
     loadParentCategories();
@@ -145,43 +163,83 @@ function App() {
     setCurrentPage(1);
   };
 
+  const handleListBusinessClick = () => {
+    if (!user) {
+      setShowAuth(true);
+    } else if (isProvider) {
+      setShowRegister(true);
+    }
+  };
+
+  if (authLoading) {
+    return (
+      <div className="app">
+        <Header selectedState={selectedState} onStateChange={handleStateChange} onLoginClick={() => setShowAuth(true)} onMessagesClick={() => setShowMessages(true)} onRequestsClick={() => setShowRequests(true)} />
+        <main className="main-content">
+          <p>Loading...</p>
+        </main>
+      </div>
+    );
+  }
+
   return (
     <div className="app">
-      <Header selectedState={selectedState} onStateChange={handleStateChange} />
+      <Header selectedState={selectedState} onStateChange={handleStateChange} onLoginClick={() => setShowAuth(true)} onMessagesClick={() => setShowMessages(true)} onRequestsClick={() => setShowRequests(true)} />
       <main className="main-content">
-        <div className="filters-row">
-          <div className="filters-left">
-            <LocationFilter
-              locationEnabled={locationEnabled}
-              radius={radius}
-              onLocationToggle={handleLocationToggle}
-              onRadiusChange={handleRadiusChange}
+        {isProvider && user ? (
+          <>
+            <div className="provider-dashboard-header">
+              <h2>My Listed Businesses</h2>
+              <button className="register-btn" onClick={handleListBusinessClick}>
+                + List Your Business
+              </button>
+            </div>
+            <BusinessList
+              businesses={businesses}
+              pagination={pagination}
+              loading={loading}
+              onPageChange={handlePageChange}
             />
-            <button className="register-btn" onClick={() => setShowRegister(true)}>
-              + List Your Business
-            </button>
-          </div>
-          <SearchBar onSearch={handleSearch} />
-        </div>
-        <CategoryGrid
-          parentCategories={parentCategories}
-          subcategories={subcategories}
-          selectedParent={selectedParent}
-          selectedSubcategory={selectedSubcategory}
-          onParentSelect={handleParentSelect}
-          onSubcategorySelect={handleSubcategorySelect}
-        />
-        <BusinessList
-          businesses={businesses}
-          pagination={pagination}
-          loading={loading}
-          onPageChange={handlePageChange}
-        />
+          </>
+        ) : (
+          <>
+            <div className="filters-row">
+              <div className="filters-left">
+                <LocationFilter
+                  locationEnabled={locationEnabled}
+                  radius={radius}
+                  onLocationToggle={handleLocationToggle}
+                  onRadiusChange={handleRadiusChange}
+                />
+                {!user && (
+                  <button className="register-btn" onClick={handleListBusinessClick}>
+                    + List Your Business
+                  </button>
+                )}
+              </div>
+              <SearchBar onSearch={handleSearch} />
+            </div>
+            <CategoryGrid
+              parentCategories={parentCategories}
+              subcategories={subcategories}
+              selectedParent={selectedParent}
+              selectedSubcategory={selectedSubcategory}
+              onParentSelect={handleParentSelect}
+              onSubcategorySelect={handleSubcategorySelect}
+            />
+            <BusinessList
+              businesses={businesses}
+              pagination={pagination}
+              loading={loading}
+              onPageChange={handlePageChange}
+            />
+          </>
+        )}
       </main>
       <footer className="footer">
         <div className="footer-content">
           <div className="footer-brand">
-            <h3>🇳🇵 OzNepal</h3>
+            <h3>🇳🇵 NepaliWoriPari</h3>
             <p>Connecting the Nepali community with trusted local businesses across Australia.</p>
           </div>
           <div className="footer-links">
@@ -202,7 +260,7 @@ function App() {
           </div>
         </div>
         <div className="footer-bottom">
-          <p>© {new Date().getFullYear()} OzNepal. Made with ❤️ for the Nepali community in Australia.</p>
+          <p>© {new Date().getFullYear()} NepaliWoriPari. Made with ❤️ for the Nepali community in Australia.</p>
         </div>
       </footer>
       <RegisterBusiness
@@ -210,7 +268,20 @@ function App() {
         onClose={() => setShowRegister(false)}
         onSuccess={loadBusinesses}
       />
+      <AuthModal show={showAuth} onClose={() => setShowAuth(false)} />
+      <ChatInbox show={showMessages} onClose={() => { setShowMessages(false); refreshCounts(); }} />
+      <ServiceRequests show={showRequests} onClose={() => { setShowRequests(false); refreshCounts(); }} />
     </div>
+  );
+}
+
+function App() {
+  return (
+    <AuthProvider>
+      <NotificationProvider>
+        <AppContent />
+      </NotificationProvider>
+    </AuthProvider>
   );
 }
 

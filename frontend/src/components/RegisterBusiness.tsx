@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Category, AUSTRALIAN_STATES } from '../types';
+import { useAuth } from '../context/AuthContext';
 
 interface RegisterBusinessProps {
   show: boolean;
@@ -8,7 +9,8 @@ interface RegisterBusinessProps {
 }
 
 export function RegisterBusiness({ show, onClose, onSuccess }: RegisterBusinessProps) {
-  const [step, setStep] = useState<'form' | 'verify' | 'success'>('form');
+  const { token } = useAuth();
+  const [step, setStep] = useState<'form' | 'success'>('form');
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -23,56 +25,31 @@ export function RegisterBusiness({ show, onClose, onSuccess }: RegisterBusinessP
   const [description, setDescription] = useState('');
   const [website, setWebsite] = useState('');
 
-  // OTP
-  const [otp, setOtp] = useState('');
-
   useEffect(() => {
     if (show) {
-      // Fetch only parent categories
-      fetch('/api/categories')
+      // Fetch all subcategories (grouped by parent) for the dropdown
+      fetch('/api/categories/all-subcategories')
         .then((res) => res.json())
-        .then((parents: Category[]) => {
-          setCategories(parents);
+        .then((data: Category[]) => {
+          setCategories(data);
         })
         .catch(() => setCategories([]));
     }
   }, [show]);
 
-  const handleSendOTP = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     setLoading(true);
 
     try {
-      const res = await fetch('/api/register/send-otp', {
+      const res = await fetch('/api/register', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
         body: JSON.stringify({ name, phone, email, categoryId: parseInt(categoryId), state, city, description, website }),
-      });
-      const data = await res.json();
-
-      if (!res.ok) {
-        setError(data.error);
-      } else {
-        setStep('verify');
-      }
-    } catch {
-      setError('Something went wrong. Please try again.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleVerify = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError('');
-    setLoading(true);
-
-    try {
-      const res = await fetch('/api/register/verify', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, otp }),
       });
       const data = await res.json();
 
@@ -102,7 +79,6 @@ export function RegisterBusiness({ show, onClose, onSuccess }: RegisterBusinessP
     setCity('');
     setDescription('');
     setWebsite('');
-    setOtp('');
     setError('');
     onClose();
   };
@@ -117,9 +93,9 @@ export function RegisterBusiness({ show, onClose, onSuccess }: RegisterBusinessP
         {step === 'form' && (
           <>
             <h2 className="modal-title">📋 List Your Business</h2>
-            <p className="modal-subtitle">Add your business to OzNepal directory</p>
+            <p className="modal-subtitle">Add your business to NepaliWoriPari directory</p>
 
-            <form onSubmit={handleSendOTP} className="register-form">
+            <form onSubmit={handleSubmit} className="register-form">
               <div className="form-group">
                 <label htmlFor="reg-name">Business Name *</label>
                 <input id="reg-name" type="text" value={name} onChange={(e) => setName(e.target.value)} required placeholder="e.g. Himalayan Kitchen" />
@@ -133,7 +109,6 @@ export function RegisterBusiness({ show, onClose, onSuccess }: RegisterBusinessP
               <div className="form-group">
                 <label htmlFor="reg-email">Email Address *</label>
                 <input id="reg-email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required placeholder="you@example.com" />
-                <span className="form-hint">We'll send a verification code to this email</span>
               </div>
 
               <div className="form-group">
@@ -141,7 +116,9 @@ export function RegisterBusiness({ show, onClose, onSuccess }: RegisterBusinessP
                 <select id="reg-category" value={categoryId} onChange={(e) => setCategoryId(e.target.value)} required>
                   <option value="">Select a category</option>
                   {categories.map((cat) => (
-                    <option key={cat.id} value={cat.id}>{cat.name}</option>
+                    <option key={cat.id} value={cat.id}>
+                      {(cat as Category & { parent_name?: string }).parent_name ? `${(cat as Category & { parent_name?: string }).parent_name} → ` : ''}{cat.name}
+                    </option>
                   ))}
                 </select>
               </div>
@@ -174,41 +151,7 @@ export function RegisterBusiness({ show, onClose, onSuccess }: RegisterBusinessP
               {error && <p className="form-error">{error}</p>}
 
               <button type="submit" className="form-submit" disabled={loading}>
-                {loading ? 'Sending code...' : 'Verify Email & Register'}
-              </button>
-            </form>
-          </>
-        )}
-
-        {step === 'verify' && (
-          <>
-            <h2 className="modal-title">📱 Verify Your Phone</h2>
-            <p className="modal-subtitle">Enter the 6-digit code sent to {email}</p>
-
-            <form onSubmit={handleVerify} className="register-form">
-              <div className="form-group">
-                <label htmlFor="reg-otp">Verification Code</label>
-                <input
-                  id="reg-otp"
-                  type="text"
-                  value={otp}
-                  onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
-                  required
-                  placeholder="123456"
-                  className="otp-input"
-                  maxLength={6}
-                  autoFocus
-                />
-              </div>
-
-              {error && <p className="form-error">{error}</p>}
-
-              <button type="submit" className="form-submit" disabled={loading || otp.length !== 6}>
-                {loading ? 'Verifying...' : 'Confirm & Register'}
-              </button>
-
-              <button type="button" className="form-back" onClick={() => { setStep('form'); setError(''); }}>
-                ← Back to form
+                {loading ? 'Registering...' : 'Register Business'}
               </button>
             </form>
           </>
@@ -218,7 +161,7 @@ export function RegisterBusiness({ show, onClose, onSuccess }: RegisterBusinessP
           <div className="register-success">
             <span className="success-icon">✅</span>
             <h2>Business Registered!</h2>
-            <p>Your business has been added to OzNepal. Thank you!</p>
+            <p>Your business has been added to NepaliWoriPari. Thank you!</p>
           </div>
         )}
       </div>
