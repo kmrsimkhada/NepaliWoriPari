@@ -1,7 +1,7 @@
 import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
 import { io, Socket } from 'socket.io-client';
 import { useAuth } from './AuthContext';
-import { API_BASE } from '../config';
+import { API_BASE, SOCKET_URL } from '../config';
 
 interface NotificationContextType {
   unreadMessages: number;
@@ -44,7 +44,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
       fetchCounts();
 
       // Connect socket for real-time notifications
-      const newSocket = io(import.meta.env.VITE_API_URL || '/', { auth: { token } });
+      const newSocket = io(SOCKET_URL, { auth: { token } });
 
       newSocket.on('message_notification', () => {
         setUnreadMessages((prev) => prev + 1);

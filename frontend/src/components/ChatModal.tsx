@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { io, Socket } from 'socket.io-client';
 import { useAuth } from '../context/AuthContext';
-import { API_BASE } from '../config';
+import { API_BASE, SOCKET_URL } from '../config';
 
 interface Message {
   id?: number;
@@ -37,7 +37,7 @@ export function ChatModal({ show, onClose, businessId, businessName, providerId 
       setConversationId(convId);
 
       // Connect socket
-      const socket = io(import.meta.env.VITE_API_URL || '/', {
+      const socket = io(SOCKET_URL, {
         auth: { token },
       });
 
