@@ -692,16 +692,26 @@ body {
     max-width: none;
     flex: 1;
     min-width: 0;
+    padding: 0.5rem 1.8rem 0.5rem 0.75rem;
+    font-size: 0.75rem;
+    height: 38px;
   }
 
   .header-auth {
     margin-left: 0;
     flex: 1;
+    display: flex;
   }
 
   .login-btn {
     width: 100%;
     text-align: center;
+    height: 38px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    padding: 0;
   }
 
   .user-menu {
