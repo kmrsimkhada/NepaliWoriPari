@@ -228,7 +228,7 @@ function AppContent() {
                   </button>
                 )}
               </div>
-              {selectedSubcategory && <SearchBar onSearch={handleSearch} />}
+              <SearchBar onSearch={handleSearch} />
             </div>
 
             {/* Breadcrumb navigation */}
@@ -269,8 +269,8 @@ function AppContent() {
               />
             )}
 
-            {/* Step 3: Show businesses when subcategory is selected */}
-            {selectedSubcategory && (
+            {/* Step 3: Show businesses when subcategory is selected or search is active */}
+            {(selectedSubcategory || searchQuery) && (
               <BusinessList
                 businesses={businesses}
                 pagination={pagination}
