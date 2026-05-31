@@ -117,11 +117,19 @@ const migrate = async () => {
         conversation_id VARCHAR(100) NOT NULL,
         sender_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
         receiver_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-        business_id INTEGER NOT NULL REFERENCES businesses(id) ON DELETE CASCADE,
+        business_id INTEGER,
         content TEXT NOT NULL,
         is_read BOOLEAN DEFAULT FALSE,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
+    `);
+
+    // Drop the foreign key on business_id if it exists (to allow service post IDs)
+    await client.query(`
+      DO $$ BEGIN
+        ALTER TABLE messages DROP CONSTRAINT IF EXISTS messages_business_id_fkey;
+      EXCEPTION WHEN undefined_object THEN NULL;
+      END $$;
     `);
 
     await client.query(`

@@ -34,7 +34,7 @@ router.get('/conversations', authenticate, async (req: AuthRequest, res: Respons
       `SELECT DISTINCT ON (m.conversation_id)
         m.conversation_id,
         m.business_id,
-        b.name as business_name,
+        COALESCE(b.name, sp.title, 'Conversation') as business_name,
         m.content as last_message,
         m.created_at as last_message_at,
         m.sender_id,
@@ -45,7 +45,8 @@ router.get('/conversations', authenticate, async (req: AuthRequest, res: Respons
         u.name as other_user_name,
         (SELECT COUNT(*) FROM messages WHERE conversation_id = m.conversation_id AND receiver_id = $1 AND is_read = FALSE) as unread_count
        FROM messages m
-       JOIN businesses b ON m.business_id = b.id
+       LEFT JOIN businesses b ON m.business_id = b.id
+       LEFT JOIN service_posts sp ON m.business_id = sp.id AND b.id IS NULL
        JOIN users u ON u.id = CASE WHEN m.sender_id = $1 THEN m.receiver_id ELSE m.sender_id END
        WHERE m.sender_id = $1 OR m.receiver_id = $1
        ORDER BY m.conversation_id, m.created_at DESC`,
