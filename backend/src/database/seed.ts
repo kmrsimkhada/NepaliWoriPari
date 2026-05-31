@@ -264,7 +264,7 @@ const seed = async () => {
       }
     }
 
-    // Insert sample businesses
+    // Insert sample businesses (skip if already exists)
     for (const business of sampleBusinesses) {
       const categoryResult = await client.query(
         'SELECT id FROM categories WHERE slug = $1',
@@ -272,6 +272,13 @@ const seed = async () => {
       );
 
       if (categoryResult.rows.length > 0) {
+        // Check if business already exists
+        const existing = await client.query(
+          'SELECT id FROM businesses WHERE name = $1 AND state = $2 AND city = $3 AND user_id IS NULL',
+          [business.name, business.state, business.city]
+        );
+        if (existing.rows.length > 0) continue;
+
         const website = 'website' in business ? (business as Record<string, unknown>).website : null;
         await client.query(
           `INSERT INTO businesses (name, category_id, state, city, phone, description, latitude, longitude, website) 
