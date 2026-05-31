@@ -1,32 +1,9 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 260 50" fill="none">
-  <!-- Two hands exchanging / giving and receiving - represents WoriPari -->
-  <g transform="translate(4, 5)">
-    <!-- Left hand (giving) -->
-    <path d="M8 32 C8 28, 12 24, 16 24 L22 24 C24 24, 26 22, 26 20 L26 16 C26 14, 24 12, 22 12 C20 12, 18 14, 18 16 L18 18" 
-          stroke="white" stroke-width="2.5" stroke-linecap="round" fill="none"/>
-    <!-- Right hand (receiving) -->
-    <path d="M38 32 C38 28, 34 24, 30 24 L24 24 C22 24, 20 22, 20 20 L20 16 C20 14, 22 12, 24 12 C26 12, 28 14, 28 16 L28 18" 
-          stroke="rgba(255,255,255,0.7)" stroke-width="2.5" stroke-linecap="round" fill="none"/>
-    <!-- Connection circle in the middle -->
-    <circle cx="23" cy="20" r="4" fill="white" opacity="0.9"/>
-    <!-- Small exchange arrows -->
-    <path d="M19 20 L15 20 M16 18 L15 20 L16 22" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-    <path d="M27 20 L31 20 M30 18 L31 20 L30 22" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-  </g>
-
-  <!-- Text -->
-  <text x="52" y="24" font-family="Inter, -apple-system, sans-serif" font-size="17" font-weight="800" fill="white" letter-spacing="-0.5">
-    Nepali
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 44" fill="none">
+  <!-- Clean text-only logo -->
+  <text x="0" y="28" font-family="Inter, -apple-system, sans-serif" font-size="22" font-weight="800" letter-spacing="-0.5">
+    <tspan fill="white">Nepali</tspan><tspan fill="rgba(255,255,255,0.6)">Wori</tspan><tspan fill="white">Pari</tspan>
   </text>
-  <text x="113" y="24" font-family="Inter, -apple-system, sans-serif" font-size="17" font-weight="800" fill="rgba(255,255,255,0.7)" letter-spacing="-0.5">
-    Wori
-  </text>
-  <text x="149" y="24" font-family="Inter, -apple-system, sans-serif" font-size="17" font-weight="800" fill="white" letter-spacing="-0.5">
-    Pari
-  </text>
-
-  <!-- Tagline -->
-  <text x="52" y="40" font-family="Inter, -apple-system, sans-serif" font-size="9" font-weight="400" fill="rgba(255,255,255,0.7)" letter-spacing="0.5">
-    GIVE • TAKE • CONNECT
+  <text x="0" y="42" font-family="Inter, -apple-system, sans-serif" font-size="8.5" font-weight="500" fill="rgba(255,255,255,0.6)" letter-spacing="1.5">
+    GIVE &amp; TAKE
   </text>
 </svg>
