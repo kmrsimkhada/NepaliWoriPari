@@ -43,10 +43,13 @@ router.get('/conversations', authenticate, async (req: AuthRequest, res: Respons
           ELSE m.sender_id
         END as other_user_id,
         u.name as other_user_name,
+        COALESCE(c.status, 'accepted') as conversation_status,
+        COALESCE(c.initiator_id, m.sender_id) as initiator_id,
         (SELECT COUNT(*) FROM messages WHERE conversation_id = m.conversation_id AND receiver_id = $1 AND is_read = FALSE) as unread_count
        FROM messages m
        LEFT JOIN businesses b ON m.business_id = b.id
        LEFT JOIN service_posts sp ON m.business_id = sp.id AND b.id IS NULL
+       LEFT JOIN conversations c ON m.conversation_id = c.id
        JOIN users u ON u.id = CASE WHEN m.sender_id = $1 THEN m.receiver_id ELSE m.sender_id END
        WHERE m.sender_id = $1 OR m.receiver_id = $1
        ORDER BY m.conversation_id, m.created_at DESC`,
@@ -115,6 +118,32 @@ router.post('/send', authenticate, async (req: AuthRequest, res: Response) => {
 
     const conversationId = getConversationId(senderId, receiverId, businessId);
 
+    // Check conversation status
+    const convCheck = await pool.query('SELECT status, initiator_id FROM conversations WHERE id = $1', [conversationId]);
+
+    if (convCheck.rows.length === 0) {
+      // First message — create conversation as pending
+      await pool.query(
+        'INSERT INTO conversations (id, initiator_id, receiver_id, status) VALUES ($1, $2, $3, $4)',
+        [conversationId, senderId, receiverId, 'pending']
+      );
+    } else {
+      const conv = convCheck.rows[0];
+      if (conv.status === 'rejected') {
+        return res.status(403).json({ error: 'This conversation was declined by the receiver' });
+      }
+      if (conv.status === 'pending' && senderId === conv.initiator_id) {
+        // Initiator can only send the first message until accepted
+        const msgCount = await pool.query(
+          'SELECT COUNT(*) as count FROM messages WHERE conversation_id = $1 AND sender_id = $2',
+          [conversationId, senderId]
+        );
+        if (parseInt(msgCount.rows[0].count) >= 1) {
+          return res.status(403).json({ error: 'Waiting for the receiver to accept your message' });
+        }
+      }
+    }
+
     const result = await pool.query(
       `INSERT INTO messages (conversation_id, sender_id, receiver_id, business_id, content)
        VALUES ($1, $2, $3, $4, $5)
@@ -126,6 +155,50 @@ router.post('/send', authenticate, async (req: AuthRequest, res: Response) => {
   } catch (error) {
     console.error('Error sending message:', error);
     res.status(500).json({ error: 'Failed to send message' });
+  }
+});
+
+// PATCH /api/messages/conversations/:conversationId/accept - Accept a conversation
+router.patch('/conversations/:conversationId/accept', authenticate, async (req: AuthRequest, res: Response) => {
+  try {
+    const { conversationId } = req.params;
+    const userId = req.user!.userId;
+
+    const result = await pool.query(
+      "UPDATE conversations SET status = 'accepted' WHERE id = $1 AND receiver_id = $2 AND status = 'pending' RETURNING *",
+      [conversationId, userId]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Conversation not found or not authorized' });
+    }
+
+    res.json({ message: 'Conversation accepted', conversation: result.rows[0] });
+  } catch (error) {
+    console.error('Error accepting conversation:', error);
+    res.status(500).json({ error: 'Failed to accept conversation' });
+  }
+});
+
+// PATCH /api/messages/conversations/:conversationId/reject - Reject a conversation
+router.patch('/conversations/:conversationId/reject', authenticate, async (req: AuthRequest, res: Response) => {
+  try {
+    const { conversationId } = req.params;
+    const userId = req.user!.userId;
+
+    const result = await pool.query(
+      "UPDATE conversations SET status = 'rejected' WHERE id = $1 AND receiver_id = $2 AND status = 'pending' RETURNING *",
+      [conversationId, userId]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Conversation not found or not authorized' });
+    }
+
+    res.json({ message: 'Conversation rejected' });
+  } catch (error) {
+    console.error('Error rejecting conversation:', error);
+    res.status(500).json({ error: 'Failed to reject conversation' });
   }
 });
 

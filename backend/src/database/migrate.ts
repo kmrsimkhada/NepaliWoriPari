@@ -132,6 +132,17 @@ const migrate = async () => {
       END $$;
     `);
 
+    // Create conversations table to track acceptance status
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS conversations (
+        id VARCHAR(100) PRIMARY KEY,
+        initiator_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        receiver_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        status VARCHAR(20) NOT NULL DEFAULT 'pending',
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+
     await client.query(`
       CREATE INDEX IF NOT EXISTS idx_messages_conversation ON messages(conversation_id);
     `);
