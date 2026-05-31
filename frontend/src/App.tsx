@@ -8,6 +8,7 @@ import { RegisterBusiness } from './components/RegisterBusiness';
 import { AuthModal } from './components/AuthModal';
 import { ChatInbox } from './components/ChatInbox';
 import { ServiceRequests } from './components/ServiceRequests';
+import { Profile } from './components/Profile';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { NotificationProvider, useNotifications } from './context/NotificationContext';
 import { fetchCategoryStats, fetchSubcategories, fetchBusinesses, fetchNearbyBusinesses, fetchMyBusinesses } from './api';
@@ -36,6 +37,7 @@ function AppContent() {
   const [showAuth, setShowAuth] = useState(false);
   const [showMessages, setShowMessages] = useState(false);
   const [showRequests, setShowRequests] = useState(false);
+  const [showProfile, setShowProfile] = useState(false);
 
   const isProvider = user?.role === 'provider';
 
@@ -174,7 +176,7 @@ function AppContent() {
   if (authLoading) {
     return (
       <div className="app">
-        <Header selectedState={selectedState} onStateChange={handleStateChange} onLoginClick={() => setShowAuth(true)} onMessagesClick={() => setShowMessages(true)} onRequestsClick={() => setShowRequests(true)} />
+        <Header selectedState={selectedState} onStateChange={handleStateChange} onLoginClick={() => setShowAuth(true)} onMessagesClick={() => setShowMessages(true)} onRequestsClick={() => setShowRequests(true)} onProfileClick={() => setShowProfile(true)} />
         <main className="main-content">
           <p>Loading...</p>
         </main>
@@ -184,7 +186,7 @@ function AppContent() {
 
   return (
     <div className="app">
-      <Header selectedState={selectedState} onStateChange={handleStateChange} onLoginClick={() => setShowAuth(true)} onMessagesClick={() => setShowMessages(true)} onRequestsClick={() => setShowRequests(true)} />
+      <Header selectedState={selectedState} onStateChange={handleStateChange} onLoginClick={() => setShowAuth(true)} onMessagesClick={() => setShowMessages(true)} onRequestsClick={() => setShowRequests(true)} onProfileClick={() => setShowProfile(true)} />
       <main className="main-content">
         {isProvider && user ? (
           <>
@@ -271,6 +273,7 @@ function AppContent() {
       <AuthModal show={showAuth} onClose={() => setShowAuth(false)} />
       <ChatInbox show={showMessages} onClose={() => { setShowMessages(false); refreshCounts(); }} />
       <ServiceRequests show={showRequests} onClose={() => { setShowRequests(false); refreshCounts(); }} />
+      <Profile show={showProfile} onClose={() => setShowProfile(false)} />
     </div>
   );
 }

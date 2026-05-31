@@ -8,9 +8,10 @@ interface HeaderProps {
   onLoginClick: () => void;
   onMessagesClick: () => void;
   onRequestsClick: () => void;
+  onProfileClick: () => void;
 }
 
-export function Header({ selectedState, onStateChange, onLoginClick, onMessagesClick, onRequestsClick }: HeaderProps) {
+export function Header({ selectedState, onStateChange, onLoginClick, onMessagesClick, onRequestsClick, onProfileClick }: HeaderProps) {
   const { user, logout } = useAuth();
   const { unreadMessages, pendingRequests } = useNotifications();
 
@@ -42,7 +43,9 @@ export function Header({ selectedState, onStateChange, onLoginClick, onMessagesC
           <div className="header-auth">
             {user ? (
               <div className="user-menu">
-                <span className="user-greeting">Hi, {user.name.split(' ')[0]}</span>
+                <button className="auth-btn profile-btn" onClick={onProfileClick} title={user.name}>
+                  {user.name.charAt(0).toUpperCase()}
+                </button>
                 <button className="auth-btn messages-btn" onClick={onRequestsClick} title="Service Requests">
                   📋
                   {pendingRequests > 0 && <span className="notification-badge">{pendingRequests}</span>}
