@@ -691,10 +691,17 @@ body {
   .state-select {
     max-width: none;
     flex: 1;
+    min-width: 0;
   }
 
   .header-auth {
     margin-left: 0;
+    flex: 1;
+  }
+
+  .login-btn {
+    width: 100%;
+    text-align: center;
   }
 
   .user-menu {
