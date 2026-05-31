@@ -712,6 +712,7 @@ body {
     justify-content: center;
     font-size: 0.75rem;
     padding: 0;
+    white-space: nowrap;
   }
 
   .user-menu {
@@ -2073,4 +2074,19 @@ body {
 .profile-logout-btn:hover {
   background: var(--color-primary);
   color: white;
+}
+
+
+/* Login button text toggle */
+.login-text-short {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .login-text-full {
+    display: none;
+  }
+  .login-text-short {
+    display: inline;
+  }
 }

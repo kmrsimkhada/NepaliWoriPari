@@ -60,7 +60,8 @@ export function Header({ selectedState, onStateChange, onLoginClick, onMessagesC
               </div>
             ) : (
               <button className="auth-btn login-btn" onClick={onLoginClick}>
-                Login / Sign Up
+                <span className="login-text-full">Login / Sign Up</span>
+                <span className="login-text-short">Login</span>
               </button>
             )}
           </div>
