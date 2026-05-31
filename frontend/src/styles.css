@@ -903,6 +903,17 @@ body {
     gap: 0.5rem;
   }
 
+  .auth-form .form-row {
+    grid-template-columns: 1fr;
+    gap: 0.5rem;
+  }
+
+  .auth-form .form-group select,
+  .auth-form .form-group input {
+    width: 100%;
+    font-size: 16px;
+  }
+
   .chat-modal {
     width: 100%;
     max-width: 100%;
