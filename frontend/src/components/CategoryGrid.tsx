@@ -33,6 +33,9 @@ export function CategoryGrid({
             >
               <span className="category-icon">{sub.icon}</span>
               <span className="category-name">{sub.name}</span>
+              {sub.business_count && parseInt(sub.business_count) > 0 && (
+                <span className="category-count">{sub.business_count}</span>
+              )}
             </button>
           ))}
         </div>

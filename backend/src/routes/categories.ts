@@ -50,7 +50,12 @@ router.get('/:slug/subcategories', async (req: Request, res: Response) => {
     const parentId = parentResult.rows[0].id;
 
     const result = await pool.query(
-      'SELECT * FROM categories WHERE parent_id = $1 ORDER BY name ASC',
+      `SELECT c.*, COUNT(b.id) as business_count
+       FROM categories c
+       LEFT JOIN businesses b ON b.category_id = c.id
+       WHERE c.parent_id = $1
+       GROUP BY c.id
+       ORDER BY c.name ASC`,
       [parentId]
     );
 
