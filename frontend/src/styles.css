@@ -758,8 +758,14 @@ body {
   }
 
   .filters-left {
-    flex-wrap: wrap;
+    flex-direction: column;
     gap: 0.5rem;
+    width: 100%;
+  }
+
+  .register-btn {
+    width: 100%;
+    text-align: center;
   }
 
   .search-bar {
