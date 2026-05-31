@@ -1027,8 +1027,9 @@ body {
   align-items: center;
   justify-content: center;
   z-index: 1000;
-  padding: 1rem;
+  padding: 2rem 1rem;
   backdrop-filter: blur(2px);
+  overflow-y: auto;
 }
 
 .modal-content {
@@ -1251,6 +1252,8 @@ body {
 .auth-modal {
   max-width: 420px;
   width: 90%;
+  max-height: 85vh;
+  overflow-y: auto;
 }
 
 .auth-modal h2 {
