@@ -758,13 +758,18 @@ body {
   }
 
   .filters-left {
-    flex-direction: column;
+    flex-direction: row;
+    flex-wrap: wrap;
     gap: 0.5rem;
     width: 100%;
+    align-items: center;
   }
 
+  .location-toggle,
   .register-btn {
-    width: 100%;
+    font-size: 0.75rem;
+    padding: 0.5rem 0.75rem;
+    width: auto;
     text-align: center;
   }
 
