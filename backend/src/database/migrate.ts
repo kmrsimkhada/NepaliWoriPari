@@ -151,6 +151,32 @@ const migrate = async () => {
       CREATE INDEX IF NOT EXISTS idx_service_requests_seeker ON service_requests(seeker_id);
     `);
 
+    // Create service_posts table (seekers post what they need)
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS service_posts (
+        id SERIAL PRIMARY KEY,
+        seeker_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        category_id INTEGER REFERENCES categories(id) ON DELETE SET NULL,
+        title VARCHAR(255) NOT NULL,
+        description TEXT,
+        state VARCHAR(3) NOT NULL,
+        city VARCHAR(100),
+        budget VARCHAR(100),
+        status VARCHAR(20) NOT NULL DEFAULT 'open',
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+
+    await client.query(`
+      CREATE INDEX IF NOT EXISTS idx_service_posts_seeker ON service_posts(seeker_id);
+    `);
+    await client.query(`
+      CREATE INDEX IF NOT EXISTS idx_service_posts_status ON service_posts(status);
+    `);
+    await client.query(`
+      CREATE INDEX IF NOT EXISTS idx_service_posts_category ON service_posts(category_id);
+    `);
+
     await client.query('COMMIT');
     console.log('Migration completed successfully (non-destructive)');
   } catch (error) {

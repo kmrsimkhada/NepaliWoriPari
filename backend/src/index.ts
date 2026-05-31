@@ -11,6 +11,7 @@ import authRouter from './routes/auth';
 import reviewsRouter from './routes/reviews';
 import messagesRouter from './routes/messages';
 import serviceRequestsRouter from './routes/serviceRequests';
+import servicePostsRouter from './routes/servicePosts';
 
 dotenv.config();
 
@@ -43,6 +44,7 @@ app.use('/api/auth', authRouter);
 app.use('/api/reviews', reviewsRouter);
 app.use('/api/messages', messagesRouter);
 app.use('/api/service-requests', serviceRequestsRouter);
+app.use('/api/service-posts', servicePostsRouter);
 
 // Health check
 app.get('/api/health', (_req, res) => {

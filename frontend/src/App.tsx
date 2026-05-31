@@ -9,6 +9,8 @@ import { AuthModal } from './components/AuthModal';
 import { ChatInbox } from './components/ChatInbox';
 import { ServiceRequests } from './components/ServiceRequests';
 import { Profile } from './components/Profile';
+import { PostServiceNeeded } from './components/PostServiceNeeded';
+import { ServiceWantedFeed } from './components/ServiceWantedFeed';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { NotificationProvider, useNotifications } from './context/NotificationContext';
 import { fetchCategoryStats, fetchSubcategories, fetchBusinesses, fetchNearbyBusinesses, fetchMyBusinesses } from './api';
@@ -38,6 +40,7 @@ function AppContent() {
   const [showMessages, setShowMessages] = useState(false);
   const [showRequests, setShowRequests] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
+  const [showPostNeeded, setShowPostNeeded] = useState(false);
 
   const isProvider = user?.role === 'provider';
 
@@ -202,6 +205,7 @@ function AppContent() {
               loading={loading}
               onPageChange={handlePageChange}
             />
+            <ServiceWantedFeed />
           </>
         ) : (
           <>
@@ -216,6 +220,11 @@ function AppContent() {
                 {!user && (
                   <button className="register-btn" onClick={handleListBusinessClick}>
                     + List Your Business
+                  </button>
+                )}
+                {user?.role === 'seeker' && (
+                  <button className="register-btn post-needed-btn" onClick={() => setShowPostNeeded(true)}>
+                    🔍 Post What You Need
                   </button>
                 )}
               </div>
@@ -308,6 +317,7 @@ function AppContent() {
       <ChatInbox show={showMessages} onClose={() => { setShowMessages(false); refreshCounts(); }} />
       <ServiceRequests show={showRequests} onClose={() => { setShowRequests(false); refreshCounts(); }} />
       <Profile show={showProfile} onClose={() => setShowProfile(false)} />
+      <PostServiceNeeded show={showPostNeeded} onClose={() => setShowPostNeeded(false)} onSuccess={() => {}} />
     </div>
   );
 }
