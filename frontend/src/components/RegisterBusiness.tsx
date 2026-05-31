@@ -12,7 +12,8 @@ interface RegisterBusinessProps {
 export function RegisterBusiness({ show, onClose, onSuccess }: RegisterBusinessProps) {
   const { token } = useAuth();
   const [step, setStep] = useState<'form' | 'success'>('form');
-  const [categories, setCategories] = useState<Category[]>([]);
+  const [parentCategories, setParentCategories] = useState<Category[]>([]);
+  const [subcategories, setSubcategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -20,23 +21,36 @@ export function RegisterBusiness({ show, onClose, onSuccess }: RegisterBusinessP
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
   const [email, setEmail] = useState('');
+  const [parentCategorySlug, setParentCategorySlug] = useState('');
   const [categoryId, setCategoryId] = useState('');
   const [state, setState] = useState('QLD');
   const [city, setCity] = useState('');
   const [description, setDescription] = useState('');
   const [website, setWebsite] = useState('');
 
+  // Fetch parent categories on open
   useEffect(() => {
     if (show) {
-      // Fetch all subcategories (grouped by parent) for the dropdown
-      fetch(`${API_BASE}/categories/all-subcategories`)
+      fetch(`${API_BASE}/categories`)
         .then((res) => res.json())
-        .then((data: Category[]) => {
-          setCategories(data);
-        })
-        .catch(() => setCategories([]));
+        .then((data: Category[]) => setParentCategories(data))
+        .catch(() => setParentCategories([]));
     }
   }, [show]);
+
+  // Fetch subcategories when parent changes
+  useEffect(() => {
+    if (parentCategorySlug) {
+      fetch(`${API_BASE}/categories/${parentCategorySlug}/subcategories`)
+        .then((res) => res.json())
+        .then((data: Category[]) => setSubcategories(data))
+        .catch(() => setSubcategories([]));
+      setCategoryId('');
+    } else {
+      setSubcategories([]);
+      setCategoryId('');
+    }
+  }, [parentCategorySlug]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -75,6 +89,7 @@ export function RegisterBusiness({ show, onClose, onSuccess }: RegisterBusinessP
     setName('');
     setPhone('');
     setEmail('');
+    setParentCategorySlug('');
     setCategoryId('');
     setState('QLD');
     setCity('');
@@ -113,16 +128,36 @@ export function RegisterBusiness({ show, onClose, onSuccess }: RegisterBusinessP
               </div>
 
               <div className="form-group">
-                <label htmlFor="reg-category">Category *</label>
-                <select id="reg-category" value={categoryId} onChange={(e) => setCategoryId(e.target.value)} required>
+                <label htmlFor="reg-parent-category">Category *</label>
+                <select
+                  id="reg-parent-category"
+                  value={parentCategorySlug}
+                  onChange={(e) => setParentCategorySlug(e.target.value)}
+                  required
+                >
                   <option value="">Select a category</option>
-                  {categories.map((cat) => (
-                    <option key={cat.id} value={cat.id}>
-                      {(cat as Category & { parent_name?: string }).parent_name ? `${(cat as Category & { parent_name?: string }).parent_name} → ` : ''}{cat.name}
-                    </option>
+                  {parentCategories.map((cat) => (
+                    <option key={cat.id} value={cat.slug}>{cat.icon} {cat.name}</option>
                   ))}
                 </select>
               </div>
+
+              {subcategories.length > 0 && (
+                <div className="form-group">
+                  <label htmlFor="reg-subcategory">Subcategory *</label>
+                  <select
+                    id="reg-subcategory"
+                    value={categoryId}
+                    onChange={(e) => setCategoryId(e.target.value)}
+                    required
+                  >
+                    <option value="">Select a subcategory</option>
+                    {subcategories.map((cat) => (
+                      <option key={cat.id} value={cat.id}>{cat.icon} {cat.name}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
 
               <div className="form-row">
                 <div className="form-group">
