@@ -2090,3 +2090,27 @@ body {
     display: inline;
   }
 }
+
+
+/* Breadcrumb Navigation */
+.breadcrumb {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.breadcrumb-btn {
+  background: none;
+  border: none;
+  color: var(--color-primary);
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0.25rem 0;
+  transition: color 0.2s;
+}
+
+.breadcrumb-btn:hover {
+  color: var(--color-primary-dark);
+  text-decoration: underline;
+}

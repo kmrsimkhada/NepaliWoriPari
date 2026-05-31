@@ -219,22 +219,56 @@ function AppContent() {
                   </button>
                 )}
               </div>
-              <SearchBar onSearch={handleSearch} />
+              {selectedSubcategory && <SearchBar onSearch={handleSearch} />}
             </div>
-            <CategoryGrid
-              parentCategories={parentCategories}
-              subcategories={subcategories}
-              selectedParent={selectedParent}
-              selectedSubcategory={selectedSubcategory}
-              onParentSelect={handleParentSelect}
-              onSubcategorySelect={handleSubcategorySelect}
-            />
-            <BusinessList
-              businesses={businesses}
-              pagination={pagination}
-              loading={loading}
-              onPageChange={handlePageChange}
-            />
+
+            {/* Breadcrumb navigation */}
+            {(selectedParent || selectedSubcategory) && (
+              <div className="breadcrumb">
+                <button className="breadcrumb-btn" onClick={() => { handleParentSelect(null); }}>
+                  ← All Categories
+                </button>
+                {selectedParent && selectedSubcategory && (
+                  <button className="breadcrumb-btn" onClick={() => handleSubcategorySelect(null)}>
+                    ← {parentCategories.find(c => c.slug === selectedParent)?.name || 'Back'}
+                  </button>
+                )}
+              </div>
+            )}
+
+            {/* Step 1: Show parent categories */}
+            {!selectedParent && (
+              <CategoryGrid
+                parentCategories={parentCategories}
+                subcategories={[]}
+                selectedParent={null}
+                selectedSubcategory={null}
+                onParentSelect={handleParentSelect}
+                onSubcategorySelect={handleSubcategorySelect}
+              />
+            )}
+
+            {/* Step 2: Show subcategories when parent is selected */}
+            {selectedParent && !selectedSubcategory && (
+              <CategoryGrid
+                parentCategories={parentCategories}
+                subcategories={subcategories}
+                selectedParent={selectedParent}
+                selectedSubcategory={null}
+                onParentSelect={handleParentSelect}
+                onSubcategorySelect={handleSubcategorySelect}
+              />
+            )}
+
+            {/* Step 3: Show businesses when subcategory is selected */}
+            {selectedSubcategory && (
+              <BusinessList
+                businesses={businesses}
+                pagination={pagination}
+                loading={loading}
+                onPageChange={handlePageChange}
+              />
+            )}
           </>
         )}
       </main>
